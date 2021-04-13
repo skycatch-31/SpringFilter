@@ -3,7 +3,7 @@
   + Servlet의 ServletContext 기능으로 사용자에 의해 Servlet이 호출 되기 전/후로 사용자의 요청.응답 헤더 정보 등을 검사 및 설정 할 수 있다.
 
 + Spring MVC request life cycle
-  ![Spring MVC](https://github.com/suhojang/SpringbootFilter/blob/master/Spring-MVC.png)
+  ![Spring MVC](https://github.com/suhojang/SpringbootFilter/blob/master/mvc.png)
 
 + Custom Annotation Rule
     + Annotation Type은 @interface로 정의해야합니다.
