@@ -1,18 +1,26 @@
-#### Spring Filter
+#### Spring-boot Filter
 + What is Filter?
   + Servlet의 ServletContext 기능으로 사용자에 의해 Servlet이 호출 되기 전/후로 사용자의 요청.응답 헤더 정보 등을 검사 및 설정 할 수 있다.
 
 + Spring MVC request life cycle
   ![Spring MVC](https://github.com/suhojang/SpringbootFilter/blob/master/mvc.png)
 
-+ Custom Annotation Rule
-    + Annotation Type은 @interface로 정의해야합니다.
-      모든 Annotation은 자동적으로 java.lang.Annotation interface를 상속하기 때문에 다른 Class나 interface를 상속 받으면 안됨.
-    + Parameter 멤버들의 접근자는 public 이거나 default여야만 함
-    + Parameter 멤버들은 byte,short,char,int,float,double,boolean의 기본타입과
-      String, Enum, Class Annotation만 사용할 수 있음.
-    + Class Method와 Feild에 관한 Annotation 정보를 얻고 싶으면, reflection만 이용해서 얻을 수 있습니다.
-      다른 방법으로는 Annotation 객체를 얻을 수 없습니다.
++ Filter와 Interceptor 비교
+  + Filter는 DispatcherServlet 앞에서 먼저 동작하고, Interceptor는 DispatcherServlet에서 Controllr(Handler) 사이에서 동작한다.
+  + Filter
+    + Web Application의 Context의 기능
+    + Spring 기능을 활용하기에 어려움
+    + 일반적으로 인코딩, CORS, XSS, LOG, Certification, Authority 등 을 구현
+  + Interceptor
+    + Spring의 Spring Context의 기능이며 일종의 Bean
+    + Spring Container이기에 다른 Bean을 Injection하여 활용성이 좋음
+    + 다른 Bean을 활용 가능하기에 Certification, Authority등을 구현함
+
++ Spring-boot에서 Filter 사용하기
+  + @ServletComponentScan
+    + Application Class에 @ServletComponentScan 선언하고 Filter Configuration Class를 사용하는 방법 
+  + @WebFilter
+    + 각각의 Fliter Class에 @Component, @WebFilter, @Order Annotation을 이용하여 구현하는 방법
 
 + Dependency
 ```xml
@@ -41,223 +49,253 @@ implementation 'org.projectlombok:lombok:1.18.20'
 testImplementation 'org.springframework.boot:spring-boot-starter-test'
 ```
 
-+ FruitColor - 과일에 색을 지정해주는 Annotation
++ ServletComponentScan 이용
 ```java
-package com.jsh.customAnnotation.fruit;
+package com.jsh.filter.example;
 
-import java.lang.annotation.*;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.web.servlet.ServletComponentScan;
 
-@Target({ElementType.FIELD})
-@Retention(RetentionPolicy.RUNTIME)
-@Documented
-public @interface FruitColor {
-    enum Color{
-        BLUE, RED, GREEN
+@ServletComponentScan
+@SpringBootApplication
+public class Application {
+
+    public static void main(String[] args) {
+        SpringApplication.run(Application.class, args);
     }
 
-    Color fruitColor() default Color.GREEN;
 }
 ```
-
-+ FruitName - 과일의 이름을 지정해주는 Annotation
 ```java
-package com.jsh.customAnnotation.fruit;
+package com.jsh.filter.example.config;
 
-import java.lang.annotation.*;
+import com.jsh.filter.example.filter.FirstSampleFilter;
+import com.jsh.filter.example.filter.SecondSampleFilter;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
-@Target(ElementType.FIELD)
-@Retention(RetentionPolicy.RUNTIME)
-@Documented
-public @interface FruitName {
-    String value() default "";
-}
-```
+import javax.servlet.Filter;
+import java.util.Arrays;
 
-+ FruitProvider - 과일을 파는 곳을 지정해주는 Annotation
-```java
-package com.jsh.customAnnotation.fruit;
+@Configuration
+public class FilterConfig {
 
-import java.lang.annotation.*;
+    @Bean
+    public FilterRegistrationBean<Filter> firstSampleFilter(){
+        FilterRegistrationBean<Filter> registrationBean = new FilterRegistrationBean<Filter>(new FirstSampleFilter());
+        registrationBean.setUrlPatterns(Arrays.asList("/sample/filter/first"));
 
-@Target({ElementType.FIELD}) 
-@Retention(RetentionPolicy.RUNTIME)
-@Documented
-public @interface FruitColor {
-    enum Color{
-        BLUE, RED, GREEN
+        return registrationBean;
     }
 
-    Color fruitColor() default Color.GREEN;
+    @Bean
+    public FilterRegistrationBean<Filter> secondSampleFilter(){
+        FilterRegistrationBean<Filter> registrationBean = new FilterRegistrationBean<Filter>(new SecondSampleFilter());
+        registrationBean.setUrlPatterns(Arrays.asList("/sample/filter/second"));
+
+        return registrationBean;
+    }
 }
 ```
-
-+ Apple
 ```java
-package com.jsh.customAnnotation.component;
+package com.jsh.filter.example.filter;
 
-import com.jsh.customAnnotation.fruit.FruitColor;
-import com.jsh.customAnnotation.fruit.FruitName;
-import com.jsh.customAnnotation.fruit.FruitProvider;
-import org.springframework.stereotype.Component;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.filter.OncePerRequestFilter;
 
-@Component
-public class Apple {
-    @FruitName("Apple")
-    private String appleName;
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebFilter;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
-    @FruitColor(fruitColor = FruitColor.Color.RED)
-    private String appleColor;
+@Slf4j
+public class FirstSampleFilter extends OncePerRequestFilter {
 
-    @FruitProvider(id = 1, name = "JSH", address = "Seoul")
-    private String appleProvider;
-}
-```
-
-+ FruitInfoUtil
-```java
-package com.jsh.customAnnotation.component;
-
-import com.jsh.customAnnotation.fruit.FruitColor;
-import com.jsh.customAnnotation.fruit.FruitName;
-import com.jsh.customAnnotation.fruit.FruitProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
-
-import java.lang.reflect.Field;
-
-@Component
-public class FruitInfoUtil {
-    private static Logger logger    = LoggerFactory.getLogger(FruitInfoUtil.class);
-    private static String _LINE     = System.getProperty("line.separator");
-
-    public static String getFruitInfo(Class<?> clazz) {
-        StringBuffer sb = new StringBuffer();
-
-        String strFruitName     = " 과일 이름 :";
-        String strFruitColor    = " 과일 색 :";
-        String strFruitProvider = "과일 파는 곳";
-
-        Field[] fields = clazz.getDeclaredFields();
-
-        for (Field field : fields) {
-            if (field.isAnnotationPresent(FruitName.class)) {
-                FruitName fruitName = field.getAnnotation(FruitName.class);
-                strFruitName += fruitName.value();
-
-                logger.info(strFruitName);
-                sb.append(strFruitName).append(_LINE);
-            } else if (field.isAnnotationPresent(FruitColor.class)) {
-                FruitColor fruitColor = field.getAnnotation(FruitColor.class);
-                strFruitColor += fruitColor.fruitColor().toString();
-
-                logger.info(strFruitColor);
-                sb.append(strFruitColor).append(_LINE);
-            } else if (field.isAnnotationPresent(FruitProvider.class)) {
-                FruitProvider fruitProvider = field.getAnnotation(FruitProvider.class);
-                strFruitProvider = " 과일 파는 곳의 ID: " + fruitProvider.id() + ", 지점 이름 : " + fruitProvider.name() + ", 지점 주소 : " + fruitProvider.address();
-
-                logger.info(strFruitProvider);
-                sb.append(strFruitProvider);
-            }
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        logger.info("FirstSampleFilter doFilterInternal() before");
+        if (request.getRequestURI().startsWith("/sample/filter/first")) {
+            logger.info("uri  startsWith [/sample/filter]");
+            response.setStatus(401);
+            return;
         }
-        return sb.toString();
+        filterChain.doFilter(request, response);
+        logger.info("FirstSampleFilter doFilterInternal() after");
+    }
+
+    @Override
+    public void destroy() {
+        logger.info("FirstSampleFilter destroy()");
+        super.destroy();
+    }
+}
+```
+```java
+package com.jsh.filter.example.filter;
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebFilter;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+@Slf4j
+public class SecondSampleFilter extends OncePerRequestFilter {
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        logger.info("SecondSampleFilter doFilterInternal() before");
+
+        filterChain.doFilter(request, response);
+
+        logger.info("SecondSampleFilter doFilterInternal() after");
+    }
+
+    @Override
+    public void destroy() {
+        logger.info("SecondSampleFilter destroy()");
+        super.destroy();
     }
 }
 ```
 
-+ FruitController
++ WebFilter 이용
 ```java
-package com.jsh.customAnnotation.controller;
+package com.jsh.filter.example;
 
-import com.jsh.customAnnotation.component.Apple;
-import com.jsh.customAnnotation.component.FruitInfoUtil;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class Application {
+
+    public static void main(String[] args) {
+        SpringApplication.run(Application.class, args);
+    }
+
+}
+```
+```java
+package com.jsh.filter.example.filter;
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.annotation.Order;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebFilter;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+@Slf4j
+@Component
+@WebFilter(urlPatterns = "/sample/filter/first")
+@Order(0)
+public class FirstSampleFilter extends OncePerRequestFilter {
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        logger.info("FirstSampleFilter doFilterInternal() before");
+        if (request.getRequestURI().startsWith("/sample/filter/first")) {
+            logger.info("uri  startsWith [/sample/filter]");
+            response.setStatus(401);
+            return;
+        }
+        filterChain.doFilter(request, response);
+        logger.info("FirstSampleFilter doFilterInternal() after");
+    }
+
+    @Override
+    public void destroy() {
+        logger.info("FirstSampleFilter destroy()");
+        super.destroy();
+    }
+}
+```
+```java
+package com.jsh.filter.example.filter;
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.annotation.Order;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebFilter;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+@Slf4j
+@Component
+@WebFilter(urlPatterns = "/sample/filter/second")
+@Order(1)
+public class SecondSampleFilter extends OncePerRequestFilter {
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        logger.info("SecondSampleFilter doFilterInternal() before");
+
+        filterChain.doFilter(request, response);
+
+        logger.info("SecondSampleFilter doFilterInternal() after");
+    }
+
+    @Override
+    public void destroy() {
+        logger.info("SecondSampleFilter destroy()");
+        super.destroy();
+    }
+}
+```
+
++ Test를 위한 RestController 생성
+```java
+package com.jsh.filter.example.controller;
+
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-public class FruitController {
-    @Autowired
-    private FruitInfoUtil fruitInfoUtil;
+public class FilterController {
+    @GetMapping("/sample/filter/first")
+    public String first(){
+        return "first call";
+    }
 
-    @GetMapping(value = "/getFruit")
-    public String getFruit() {
-        return fruitInfoUtil.getFruitInfo(Apple.class);
+    @GetMapping("/sample/filter/second")
+    public String second(){
+        return "sencond call";
     }
 }
 ```
 
-
-+ getFruit Call
++ /sample/filter/first Call
+```groovy
+2021-04-13 10:58:14.938  INFO 41032 --- [nio-8080-exec-3] c.j.f.example.filter.FirstSampleFilter   : FirstSampleFilter doFilterInternal() before
+2021-04-13 10:58:14.938  INFO 41032 --- [nio-8080-exec-3] c.j.f.example.filter.FirstSampleFilter   : uri  startsWith [/sample/filter]
 ```
-2021-04-12 17:46:39.051  INFO 22548 --- [nio-8080-exec-3] c.j.c.component.FruitInfoUtil            :  과일 이름 :Apple
-2021-04-12 17:46:39.051  INFO 22548 --- [nio-8080-exec-3] c.j.c.component.FruitInfoUtil            :  과일 색 :RED
-2021-04-12 17:46:39.051  INFO 22548 --- [nio-8080-exec-3] c.j.c.component.FruitInfoUtil            :  과일 파는 곳의 ID: 1, 지점 이름 : JSH, 지점 주소 : Seoul
-```
-
-+ Spring에서 Application 실행 시 @Service, @Component가 붙은 Class들을 Scan해서 IoC Container에 등록해주는 과정
-    + @Service Annotation
-```java
-@Target({ElementType.TYPE})
-@Retention(RetentionPolicy.RUNTIME)
-@Documented
-@Component
-public @interface Service {
-    @AliasFor(
-        annotation = Component.class
-    )
-    String value() default "";
-}
-```
-+ Service Annotation은, Target이 TYPE으로 지정되어 있음. Class나 Interface를 Target으로 삼는다는 의미
-  또한 같은 패키지인 org.springframework.stereotype 의 Component Annotation이을 쓰고 있는걸 볼 수 있음
-    + @Component Annotation
-```java
-@Target({ElementType.TYPE})
-@Retention(RetentionPolicy.RUNTIME)
-@Documented
-@Indexed
-public @interface Component {
-    String value() default "";
-}
+```groovy
+response Status Code에 401를 반환되게 처리하여 before만 logging 하는 것을 볼 수 있다
 ```
 
-+ Spring 에서는 @Component, @Service, @Controller등 Annotation이 사용 된 Class는 Bean으로 등록
-    + doScan() 메소드가 ClassPath에 있는 Package의 모든 Class를 읽어 Annotation이 붙은 Class를 처리 해 주는 Method.
-```java
-/**
- * Perform a scan within the specified base packages,
- * returning the registered bean definitions.
- * <p>This method does <i>not</i> register an annotation config processor
- * but rather leaves this up to the caller.
- * @param basePackages the packages to check for annotated classes
- * @return set of beans registered if any for tooling registration purposes (never {@code null})
- */
-protected Set<BeanDefinitionHolder> doScan(String... basePackages) {
-    Assert.notEmpty(basePackages, "At least one base package must be specified");
-    Set<BeanDefinitionHolder> beanDefinitions = new LinkedHashSet<>();
-    for (String basePackage : basePackages) {
-        Set<BeanDefinition> candidates = findCandidateComponents(basePackage);
-        for (BeanDefinition candidate : candidates) {
-            ScopeMetadata scopeMetadata = this.scopeMetadataResolver.resolveScopeMetadata(candidate);
-            candidate.setScope(scopeMetadata.getScopeName());
-            String beanName = this.beanNameGenerator.generateBeanName(candidate, this.registry);
-            if (candidate instanceof AbstractBeanDefinition) {
-                postProcessBeanDefinition((AbstractBeanDefinition) candidate, beanName);
-            }
-            if (candidate instanceof AnnotatedBeanDefinition) {
-                AnnotationConfigUtils.processCommonDefinitionAnnotations((AnnotatedBeanDefinition) candidate);
-            }
-            if (checkCandidate(beanName, candidate)) {
-                BeanDefinitionHolder definitionHolder = new BeanDefinitionHolder(candidate, beanName);
-                definitionHolder =
-                        AnnotationConfigUtils.applyScopedProxyMode(scopeMetadata, definitionHolder, this.registry);
-                beanDefinitions.add(definitionHolder);
-                registerBeanDefinition(definitionHolder, this.registry);
-            }
-        }
-    }
-    return beanDefinitions;
-}
++ /sample/filter/second Call
+```groovy
+2021-04-13 11:00:05.545  INFO 41032 --- [nio-8080-exec-6] c.j.f.example.filter.SecondSampleFilter  : SecondSampleFilter doFilterInternal() before
+2021-04-13 11:00:05.576  INFO 41032 --- [nio-8080-exec-6] c.j.f.example.filter.SecondSampleFilter  : SecondSampleFilter doFilterInternal() after
+```
+```groovy
+before, after 모두 logging 하는 것을 볼 수 있다
 ```
