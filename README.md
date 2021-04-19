@@ -8,7 +8,7 @@
     + [Dependency](#Dependency), [Gradle](#Gradle)
     + [ServletComponentScan](#ServletComponentScan이용)
     + [WebFilter](#WebFilter이용)
-    + [Test Contoller](#Test RestContoller)
+    + [Contoller](#TestRestContoller)
     + [Request](#Request)
 
 #### SpringFilter
@@ -273,7 +273,7 @@ public class SecondSampleFilter extends OncePerRequestFilter {
 }
 ```
 
-##### Test RestContoller
+##### TestRestContoller
 ```java
 package com.jsh.filter.example.controller;
 
