@@ -1,9 +1,9 @@
 ### Spring Filter
 
 - [Spring Filter](#SpringFilter)
-  * [MVC Life Cycle](#MVC Life Cycle)
+  * [MVC Life Cycle](#MVCLifeCycle)
   * [Filter와 Interceptor 비교](#Filter,Interceptor)
-  * [How to use Filter](#How to use Filter)
+  * [How to use Filter](#Howto)
   * 사용 가이드
     + [Dependency](#Dependency), [Gradle](#Gradle)
     + [ServletComponentScan](#ServletComponentScan이용)
@@ -14,7 +14,7 @@
 #### SpringFilter
   + Servlet의 ServletContext 기능으로 사용자에 의해 Servlet이 호출 되기 전/후로 사용자의 요청.응답 헤더 정보 등을 검사 및 설정 할 수 있다.
 
-#### MVC Life Cycle
+#### MVCLifeCycle
   ![Spring MVC](https://github.com/suhojang/SpringbootFilter/blob/master/mvc.png)
 
 #### Filter,Interceptor
@@ -28,7 +28,7 @@
     + Spring Container이기에 다른 Bean을 Injection하여 활용성이 좋음
     + 다른 Bean을 활용 가능하기에 Certification, Authority등을 구현함
 
-#### How to use Filter
+#### Howto
   + @ServletComponentScan
     + Application Class에 @ServletComponentScan 선언하고 Filter Configuration Class를 사용하는 방법 
   + @WebFilter
