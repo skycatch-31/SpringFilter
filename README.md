@@ -1,11 +1,23 @@
-#### Spring-boot Filter
-+ What is Filter?
+### Spring Filter
+
+- [Spring Filter](#SpringFilter)
+  * [MVC Life Cycle](#MVC Life Cycle)
+  * [Filter와 Interceptor 비교](#Filter,Interceptor)
+  * [How to use Filter](#How to use Filter)
+  * 사용 가이드
+    + [Dependency](#Dependency), [Gradle](#Gradle)
+    + [ServletComponentScan](#ServletComponentScan이용)
+    + [WebFilter](#WebFilter이용)
+    + [Test Contoller](#Test Contoller)
+    + [Request](#Request)
+
+#### SpringFilter
   + Servlet의 ServletContext 기능으로 사용자에 의해 Servlet이 호출 되기 전/후로 사용자의 요청.응답 헤더 정보 등을 검사 및 설정 할 수 있다.
 
-+ Spring MVC request life cycle
+#### MVC Life Cycle
   ![Spring MVC](https://github.com/suhojang/SpringbootFilter/blob/master/mvc.png)
 
-+ Filter와 Interceptor 비교
+#### Filter,Interceptor
   + Filter는 DispatcherServlet 앞에서 먼저 동작하고, Interceptor는 DispatcherServlet에서 Controllr(Handler) 사이에서 동작한다.
   + Filter
     + Web Application의 Context의 기능
@@ -16,13 +28,13 @@
     + Spring Container이기에 다른 Bean을 Injection하여 활용성이 좋음
     + 다른 Bean을 활용 가능하기에 Certification, Authority등을 구현함
 
-+ Spring-boot에서 Filter 사용하기
+#### How to use Filter
   + @ServletComponentScan
     + Application Class에 @ServletComponentScan 선언하고 Filter Configuration Class를 사용하는 방법 
   + @WebFilter
     + 각각의 Fliter Class에 @Component, @WebFilter, @Order Annotation을 이용하여 구현하는 방법
 
-+ Dependency
+#### Dependency
 ```xml
 <dependency>
     <groupId>org.springframework.boot</groupId>
@@ -42,14 +54,14 @@
     <scope>test</scope>
 </dependency>
   ```
-+ Gradle
+#### Gradle
 ```groovy
 implementation 'org.springframework.boot:spring-boot-starter-web'
 implementation 'org.projectlombok:lombok:1.18.20'
 testImplementation 'org.springframework.boot:spring-boot-starter-test'
 ```
 
-+ ServletComponentScan 이용
+#### ServletComponentScan이용
 ```java
 package com.jsh.filter.example;
 
@@ -167,7 +179,7 @@ public class SecondSampleFilter extends OncePerRequestFilter {
 }
 ```
 
-+ WebFilter 이용
+#### WebFilter이용
 ```java
 package com.jsh.filter.example;
 
@@ -261,7 +273,7 @@ public class SecondSampleFilter extends OncePerRequestFilter {
 }
 ```
 
-+ Test를 위한 RestController 생성
+##### Test Contoller
 ```java
 package com.jsh.filter.example.controller;
 
@@ -282,6 +294,7 @@ public class FilterController {
 }
 ```
 
+#### Request
 + /sample/filter/first Call
 ```groovy
 2021-04-13 10:58:14.938  INFO 41032 --- [nio-8080-exec-3] c.j.f.example.filter.FirstSampleFilter   : FirstSampleFilter doFilterInternal() before
