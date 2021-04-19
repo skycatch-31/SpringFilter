@@ -2,7 +2,7 @@
 
 - [Spring Filter](#SpringFilter)
   * [MVC Life Cycle](#MVCLifeCycle)
-  * [Filter와 Interceptor 비교](#Filter,Interceptor)
+  * [Filter와 Interceptor 비교](#FilterAndInterceptor)
   * [How to use Filter](#Howto)
   * 사용 가이드
     + [Dependency](#Dependency), [Gradle](#Gradle)
@@ -17,7 +17,7 @@
 #### MVCLifeCycle
   ![Spring MVC](https://github.com/suhojang/SpringbootFilter/blob/master/mvc.png)
 
-#### Filter,Interceptor
+#### FilterAndInterceptor
   + Filter는 DispatcherServlet 앞에서 먼저 동작하고, Interceptor는 DispatcherServlet에서 Controllr(Handler) 사이에서 동작한다.
   + Filter
     + Web Application의 Context의 기능
